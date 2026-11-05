@@ -54,6 +54,28 @@ ask scan                                 # detects installed agents and models
 - **Codex**: runs read-only. `--write` lets it modify files in the directory.
 - **Fallback**: if an agent fails without producing anything, the next model takes over.
 
+## Comparison with other tools
+
+The tools below solve adjacent problems. The descriptions come from third-party articles and vendor documentation, not from benchmarks run for this project.
+
+| Tool | What it is | How it picks a model | Where it runs | Good fit when |
+|---|---|---|---|---|
+| [OpenCode](https://www.tensorlake.ai/blog/opencode-the-best-claude-code-alternative) | Open-source coding agent with many providers | You choose the model per task | Local terminal | You want a full, maintained agent |
+| [claude-code-router](https://autorouter.com/blog/model-routers-claude-code-codex) | Local gateway for Claude Code | Ordered rules or scripts you write | Your machine | You want per-task rules inside Claude Code |
+| [LiteLLM](https://docs.litellm.ai/blog/auto-router-cost-quality-benchmark) | Self-hosted proxy for many APIs | Auto router (beta) that classifies requests into tiers | Your infrastructure | You run services that call LLM APIs |
+| [OpenRouter](https://www.coderouter.io/blog/openrouter-alternatives-coding-2026) | Hosted gateway, one API key | Auto Router that classifies each prompt into about 30 task types | Hosted, with a credit fee | You want the least setup |
+| **ModelRouter** | Local CLI over the agent CLIs you already have | Jev classifies the question, then the cheapest capable installed model wins | Your machine | You already pay for several agents and want them to share the load |
+
+**What is specific to ModelRouter**
+- It wraps CLIs you already run (`claude`, `codex`, `gemini`, `ollama`). It does not call provider APIs with your keys.
+- It keeps a conversation across agents: a Codex follow-up sees the previous questions and the last answer.
+- It can switch from Claude to Codex when a Claude usage window reaches 95% (see *Use it from Claude Code*).
+
+**What the others do better**
+- OpenCode and claude-code-router are more mature and cover more providers.
+- LiteLLM and OpenRouter need no local CLI, and LiteLLM has a cost and quality benchmark.
+- ModelRouter has no interface of its own and depends on Jev, a paid external service, for classification.
+
 ## Catalog
 
 `data/catalog.json` describes the agents, their commands and the level of each model. It is data: you can adjust costs and levels. For Codex, models that are not available on the connected account are dropped during the scan.
