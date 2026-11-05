@@ -1,0 +1,73 @@
+{
+  "_doc": "skills : niveau 0-4 par catégorie (code, raisonnement, redaction, recherche_web, multimodal, question_rapide, classification). cost_tier : 0 local gratuit → 5 le plus cher. Ordre = priorité à égalité. Gamme vérifiée en octobre 2026.",
+  "default_profile": {"category": "raisonnement", "complexity": 3},
+  "agents": [
+    {
+      "name": "claude",
+      "binary": "claude",
+      "env_keys": ["ANTHROPIC_API_KEY"],
+      "command": ["{bin}", "-p", "--model", "{model}", "--allowedTools=WebSearch,WebFetch,Read,Grep,Glob", "{prompt}"],
+      "session": {"start": ["--session-id", "{session}"], "resume": ["--resume", "{session}"]},
+      "models": [
+        {"name": "opus", "cost_tier": 4, "skills": {"code": 4, "raisonnement": 4, "redaction": 4, "recherche_web": 3, "multimodal": 3, "classification": 4, "question_rapide": 4}},
+        {"name": "sonnet", "cost_tier": 2, "skills": {"code": 3, "raisonnement": 3, "redaction": 4, "recherche_web": 3, "multimodal": 3, "classification": 4, "question_rapide": 4}},
+        {"name": "haiku", "cost_tier": 1, "skills": {"code": 2, "raisonnement": 2, "redaction": 3, "recherche_web": 2, "multimodal": 2, "classification": 3, "question_rapide": 4}}
+      ]
+    },
+    {
+      "name": "codex",
+      "binary": "codex",
+      "filter_by_account": true,
+      "env_keys": ["OPENAI_API_KEY"],
+      "command": ["{bin}", "exec", "-s", "{sandbox}", "--skip-git-repo-check", "-m", "{model}", "{prompt}"],
+      "models": [
+        {"name": "gpt-6-astra", "cost_tier": 5, "skills": {"code": 4, "raisonnement": 4, "redaction": 3, "recherche_web": 4, "multimodal": 3, "classification": 4, "question_rapide": 4}},
+        {"name": "gpt-6.1-sol", "cost_tier": 3, "skills": {"code": 4, "raisonnement": 3, "redaction": 3, "recherche_web": 3, "multimodal": 3, "classification": 4, "question_rapide": 4}},
+        {"name": "gpt-6-luna", "cost_tier": 1, "skills": {"code": 2, "raisonnement": 2, "redaction": 2, "recherche_web": 2, "multimodal": 2, "classification": 3, "question_rapide": 4}}
+      ]
+    },
+    {
+      "name": "gemini",
+      "binary": "gemini",
+      "env_keys": ["GEMINI_API_KEY", "GOOGLE_API_KEY"],
+      "command": ["{bin}", "-m", "{model}", "-p", "{prompt}"],
+      "models": [
+        {"name": "pro", "cost_tier": 3, "skills": {"code": 3, "raisonnement": 4, "redaction": 3, "recherche_web": 4, "multimodal": 4, "classification": 4, "question_rapide": 4}},
+        {"name": "flash", "cost_tier": 1, "skills": {"code": 2, "raisonnement": 2, "redaction": 2, "recherche_web": 3, "multimodal": 3, "classification": 3, "question_rapide": 4}}
+      ]
+    },
+    {
+      "name": "cursor-agent",
+      "binary": "cursor-agent",
+      "env_keys": ["CURSOR_API_KEY"],
+      "command": ["{bin}", "-p", "{prompt}"],
+      "models": [
+        {"name": "auto", "cost_tier": 2, "skills": {"code": 3, "raisonnement": 3, "redaction": 2, "recherche_web": 2, "multimodal": 1, "classification": 2, "question_rapide": 3}}
+      ]
+    },
+    {
+      "name": "copilot",
+      "binary": "copilot",
+      "env_keys": ["GH_TOKEN"],
+      "command": ["{bin}", "-p", "{prompt}"],
+      "models": [
+        {"name": "default", "cost_tier": 2, "skills": {"code": 3, "raisonnement": 2, "redaction": 2, "recherche_web": 1, "multimodal": 1, "classification": 2, "question_rapide": 3}}
+      ]
+    },
+    {
+      "name": "ollama",
+      "binary": "ollama",
+      "env_keys": [],
+      "command": ["{bin}", "run", "{model}", "{prompt}"],
+      "local_models": {"cost_tier": 0, "skills": {"code": 1, "raisonnement": 1, "redaction": 2, "recherche_web": 0, "multimodal": 0, "classification": 2, "question_rapide": 2}}
+    },
+    {
+      "name": "jev",
+      "builtin": true,
+      "env_keys": ["JEV_API_KEY"],
+      "models": [
+        {"name": "jev-latest", "cost_tier": 0, "skills": {"classification": 4}}
+      ]
+    }
+  ]
+}
