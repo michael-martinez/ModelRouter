@@ -1,40 +1,62 @@
 # ModelRouter
 
-Une CLI qui choisit, pour chaque question, le modèle d'IA installé le plus adapté, puis le lance.
+A CLI that picks the most suitable AI model for each question among the ones installed on your machine, then runs it.
 
 ```bash
-ask "refactor ce module"           # choisit l'agent, affiche son choix, lance la réponse
-ask "Pâtes ou riz ?"               # question fermée : répondue par Jev, sans lancer d'agent
-ask --why "question"               # montre le choix et la commande, sans rien lancer
-ask --use codex "question"         # force un agent
+ask "refactor this module"         # picks an agent, shows its choice, runs the answer
+ask "Pâtes ou riz ?"               # short closed question: answered by Jev, no agent launched
+ask --why "question"               # shows the choice and the command, runs nothing
+ask --use codex "question"         # forces an agent
 ```
 
-Le routeur classe d'abord la question (type de tâche et complexité de 0 à 4) grâce à Jev, un service de classification. Il retient ensuite le modèle le moins cher capable de la traiter parmi ceux qui sont installés sur la machine : Claude, Codex, Gemini, Ollama, ou Jev lui-même pour les questions fermées.
+The router first classifies the question (task category and complexity from 0 to 4) with Jev, a classification service. It then picks the cheapest model able to handle it among the installed ones: Claude, Codex, Gemini, Ollama, or Jev itself for short closed questions.
+
+## Routing logic
+
+```mermaid
+flowchart TD
+    Q([Question]) --> CLS["Jev classifies the question<br/>category + complexity 0-4"]
+    CLS -.->|Jev unavailable| DEF["Default profile"]
+    CLS --> CLOSED{"Short closed question<br/>(≤ 120 chars) and Jev available?"}
+    DEF --> CLOSED
+    CLOSED -->|yes| JEV["Jev answers directly"]
+    CLOSED -->|no| ACTIVE{"Active conversation<br/>(< 30 min)?"}
+    ACTIVE -->|yes| KEEP["Stay on the conversation's agent<br/>if it has the required level"]
+    ACTIVE -->|no| PICK["Cheapest capable model<br/>else strongest installed"]
+    KEEP --> RUN["Run the agent"]
+    PICK --> RUN
+    RUN --> OK{"Answer produced?"}
+    OK -->|yes| SAVE["Save conversation"]
+    OK -->|no, other models left| FALLBACK["Fallback to next model"]
+    FALLBACK --> ACTIVE
+    OK -->|no, none left| ERR["Show error"]
+    JEV --> SHOW["Show answer"]
+```
 
 ## Installation
 
-Prérequis : Python 3.9 et les CLI des agents que tu veux utiliser (`claude`, `codex`, `gemini`, `ollama`).
+Requirements: Python 3.9 and the CLIs of the agents you want to use (`claude`, `codex`, `gemini`, `ollama`).
 
 ```bash
 git clone https://github.com/michael-martinez/ModelRouter.git
 cd ModelRouter
-ln -s "$PWD/bin/ask" ~/.local/bin/ask    # ou un autre dossier du PATH
-export JEV_API_KEY=...                   # facultatif : active la classification et les questions fermées
-ask scan                                 # détecte les agents et les modèles installés
+ln -s "$PWD/bin/ask" ~/.local/bin/ask    # or any directory on your PATH
+export JEV_API_KEY=...                   # optional: enables classification and closed questions
+ask scan                                 # detects installed agents and models
 ```
 
-`ask scan` écrit l'inventaire dans `~/.config/model-router/inventory.json`. Relance-le après chaque installation ou modification du catalogue.
+`ask scan` writes the inventory to `~/.config/model-router/inventory.json`. Run it again after installing an agent or changing the catalog.
 
-## Fonctionnement
+## How it works
 
-- **Choix** : parmi les modèles capables (niveau suffisant pour la catégorie et la complexité), le moins cher gagne. Si aucun n'est capable, le plus compétent installé est utilisé.
-- **Conversation** : un fil par dossier, valable 30 minutes. Un agent qui n'a pas de session native reçoit les questions précédentes et la dernière réponse.
-- **Codex** : lancé en lecture seule. `--write` l'autorise à modifier les fichiers du dossier.
-- **Repli** : si un agent échoue sans rien produire, le modèle suivant prend la main.
+- **Choice**: among the capable models (level high enough for the category and complexity), the cheapest one wins. If none is capable, the strongest installed model is used.
+- **Conversation**: one thread per directory, valid for 30 minutes. An agent without a native session receives the previous questions and the last answer.
+- **Codex**: runs read-only. `--write` lets it modify files in the directory.
+- **Fallback**: if an agent fails without producing anything, the next model takes over.
 
-## Catalogue
+## Catalog
 
-`data/catalog.json` décrit les agents, leurs commandes et les niveaux de chaque modèle. C'est de la donnée : tu peux ajuster les coûts et les niveaux. Pour Codex, les modèles absents du compte connecté sont écartés au scan.
+`data/catalog.json` describes the agents, their commands and the level of each model. It is data: you can adjust costs and levels. For Codex, models that are not available on the connected account are dropped during the scan.
 
 ## Tests
 
@@ -43,10 +65,14 @@ python3 -m venv .venv && .venv/bin/pip install pytest
 .venv/bin/python -m pytest
 ```
 
-Les tests utilisent de faux objets uniquement aux frontières (HTTP de Jev, PATH, lancement des agents).
+Tests use fake objects only at the boundaries (Jev's HTTP calls, PATH lookup, agent launch).
 
-## Limites connues
+## Known limits
 
-- Le routage dépend de la classification de Jev : sans clé, le profil par défaut est utilisé.
-- Les agents sont appelés via leur CLI. Leurs options (sandbox, modèles disponibles) peuvent changer d'une version à l'autre.
-- Les questions fermées sont détectées par leur forme : une question courte du type « X ou Y ? » part vers Jev.
+- Routing depends on Jev's classification: without a key, the default profile is used.
+- Agents are called through their CLI. Their options (sandbox, available models) may change between versions.
+- Closed questions are detected by their form: a short question such as "X or Y?" is sent to Jev.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
