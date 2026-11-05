@@ -60,10 +60,10 @@ The tools below solve adjacent problems. The descriptions come from third-party 
 
 | Tool | What it is | How it picks a model | Where it runs | Good fit when |
 |---|---|---|---|---|
-| [OpenCode](https://www.tensorlake.ai/blog/opencode-the-best-claude-code-alternative) | Open-source coding agent with many providers | You choose the model per task | Local terminal | You want a full, maintained agent |
-| [claude-code-router](https://autorouter.com/blog/model-routers-claude-code-codex) | Local gateway for Claude Code | Ordered rules or scripts you write | Your machine | You want per-task rules inside Claude Code |
-| [LiteLLM](https://docs.litellm.ai/blog/auto-router-cost-quality-benchmark) | Self-hosted proxy for many APIs | Auto router (beta) that classifies requests into tiers | Your infrastructure | You run services that call LLM APIs |
-| [OpenRouter](https://www.coderouter.io/blog/openrouter-alternatives-coding-2026) | Hosted gateway, one API key | Auto Router that classifies each prompt into about 30 task types | Hosted, with a credit fee | You want the least setup |
+| [OpenCode](https://github.com/anomalyco/opencode) | Open-source coding agent with many providers | You choose the model per task | Local terminal | You want a full, maintained agent |
+| [claude-code-router](https://github.com/musistudio/claude-code-router) | Local gateway for Claude Code | Routing rules you configure | Your machine | You want per-task rules inside Claude Code |
+| [LiteLLM](https://github.com/BerriAI/litellm) | Self-hosted proxy for many APIs | Auto router for choosing a model per request | Your infrastructure | You run services that call LLM APIs |
+| [OpenRouter](https://openrouter.ai) | Hosted gateway, one API key | Auto Router that picks a model for each prompt | Hosted, with a credit fee | You want the least setup |
 | **ModelRouter** | Local CLI over the agent CLIs you already have | Jev classifies the question, then the cheapest capable installed model wins | Your machine | You already pay for several agents and want them to share the load |
 
 **What is specific to ModelRouter**
