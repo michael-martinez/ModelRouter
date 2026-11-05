@@ -1,7 +1,7 @@
 #!/bin/bash
 # UserPromptSubmit : Codex répond ici quand ModelRouter le choisit, ou quand Claude est à court de limite.
 # Sinon le message suit le chemin normal de Claude Code.
-# Installé par install.sh ; ask est trouvé à partir de l'emplacement de ce script.
+# ask est cherché à côté de ce script (../../bin/ask) ; MODELROUTER_ASK le remplace.
 SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ASK="${MODELROUTER_ASK:-$SELF_DIR/../../bin/ask}"
 LIMITS="$HOME/.config/model-router/claude-limits.json"
@@ -40,34 +40,27 @@ claude_exhausted() {
   ' "$LIMITS" >/dev/null 2>&1
 }
 
-agent=""
+to_codex=0
 if claude_exhausted; then
-  agent="codex"
+  to_codex=1
   # Limite atteinte : on demande à ask quel modèle Codex utilisera (sans rien lancer)
   choice=$("$ASK" --why --use codex "$prompt" </dev/null 2>&1 | grep '^→' | head -1)
 else
   # ModelRouter choisit en tenant compte de la conversation en cours (suite sur Codex pendant 30 min)
   choice=$("$ASK" --why "$prompt" </dev/null 2>&1 | grep '^→' | head -1)
-  case "$choice" in
-    *"→ codex/"*) agent="codex" ;;
-    *"→ jev/"*) agent="jev" ;;   # question fermée : Jev répond seul, Claude n'est pas appelé
-  esac
+  case "$choice" in *codex/*) to_codex=1 ;; esac
 fi
-[ -n "$agent" ] || exit 0
+[ "$to_codex" -eq 1 ] || exit 0
 
-# Modèle exact, par exemple « codex/gpt-6-luna » ou « jev/jev-latest » (ligne « → modèle · … »)
+# Modèle exact, par exemple « codex/gpt-6-luna » (ligne « → codex/gpt-6-luna · … »)
 model=$(printf '%s' "$choice" | sed -n 's/^→ \([^ ]*\).*/\1/p')
 name="${model#*/}"
-label="ModelRouter:${name:-$agent}: "
+label="ModelRouter:${name:-Codex}: "
 
-# Sans --new : la conversation par dossier garde le fil (30 min).
+# Codex répond. Sans --new : la conversation par dossier garde le fil (30 min).
 export MR_ROUTING=1
-if [ "$agent" = "codex" ]; then
-  # --write : Codex peut modifier les fichiers du dossier, comme Claude Code le ferait.
-  answer=$("$ASK" --write --use codex "$prompt" </dev/null 2>/dev/null)
-else
-  answer=$("$ASK" --use jev "$prompt" </dev/null 2>/dev/null)
-fi
+# --write : Codex peut modifier les fichiers du dossier, comme Claude Code le ferait.
+answer=$("$ASK" --write --use codex "$prompt" </dev/null 2>/dev/null)
 status=$?
 
 # Échec : Claude répond à la place, la question n'est pas perdue
