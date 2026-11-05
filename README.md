@@ -58,6 +58,43 @@ ask scan                                 # detects installed agents and models
 
 `data/catalog.json` describes the agents, their commands and the level of each model. It is data: you can adjust costs and levels. For Codex, models that are not available on the connected account are dropped during the scan.
 
+## Use it from Claude Code
+
+The routing can also sit in front of Claude Code through a `UserPromptSubmit` hook. The hook is **not included** in this repository: it lives in your own Claude Code configuration and depends on your paths.
+
+**Prefixes**
+
+| Prefix | Effect |
+|---|---|
+| `c: ` | Always sent to Claude, even during a Codex conversation. Claude receives the prefix as typed. |
+| `r: ` | Empties the conversation of the current directory, then handles the rest of the message normally |
+
+Slash commands (`/…`) and messages with attachments (`[Image #…]`, `[Pasted…]`) always go to Claude.
+
+**Conversation stickiness.** After a Codex answer, the following messages stay on Codex for 30 minutes, unless they use a prefix or fall under an exemption. Use `c: ` to go back to Claude for one message.
+
+**Usage limit.** A status line reports Claude's 5-hour and weekly usage (subscription plans only, after the first response of a session). When one window reaches 95% before its reset time, messages that are not exempt go to Codex.
+
+**Failures.** If Codex fails, Claude answers the message instead.
+
+```mermaid
+flowchart TD
+    M([Message in Claude Code]) --> C{Starts with 'c: '?}
+    C -->|yes| CL[Claude answers]
+    C -->|no| R{Starts with 'r: '?}
+    R -->|yes| RESET[Empty the conversation] --> S
+    R -->|no| S{Slash command<br/>or attachment?}
+    S -->|yes| CL
+    S -->|no| LIM{Claude limit reached?<br/>5 h or week ≥ 95%, not reset}
+    LIM -->|yes| CX[Codex answers, shown in the terminal]
+    LIM -->|no| ROUTE{ModelRouter picks Codex?}
+    ROUTE -->|yes| CX
+    ROUTE -->|no| CL
+    CX -.->|Codex fails| CL
+```
+
+**Codex can write.** In this flow Codex runs with `--write`, so it can modify files in the directory. Claude does not know about those changes until you describe them to it.
+
 ## Tests
 
 ```bash
