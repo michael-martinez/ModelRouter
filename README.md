@@ -82,7 +82,17 @@ The tools below solve adjacent problems. The descriptions come from third-party 
 
 ## Use it from Claude Code
 
-The routing can also sit in front of Claude Code through a `UserPromptSubmit` hook. The hook is **not included** in this repository: it lives in your own Claude Code configuration and depends on your paths.
+The routing can also sit in front of Claude Code through a `UserPromptSubmit` hook, shipped in `integrations/claude-code/`. It is optional and installed explicitly, never by `ask scan`:
+
+```bash
+integrations/claude-code/install.sh --project /path/to/project   # .claude/settings.local.json
+integrations/claude-code/install.sh --global                      # ~/.claude/settings.json, all projects
+integrations/claude-code/install.sh --uninstall --project /path/to/project
+```
+
+Requires `jq`. The installer backs up the settings file before changing it, touches only its own entries, and never replaces a status line that belongs to another tool (it warns instead). The hook finds `ask` from its own location; set `MODELROUTER_ASK` to override it.
+
+The hook hands messages to Codex only. A question that `ask` sends to Jev still goes to Claude from Claude Code; use `ask` directly for those.
 
 **Prefixes**
 

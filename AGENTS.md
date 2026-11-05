@@ -50,14 +50,15 @@ The catalog `data/catalog.json` is data: levels and costs can be adjusted freely
 - Jev classifies each question together with the previous one; a failed answer or `--why` stores nothing
 - Level 0 in a category = cannot do it (never chosen, even for complexity 0)
 
-## Claude Code integration (outside the repository)
-These files live in `~/.claude/hooks/` and in `one-week-apps/.claude/settings.local.json`:
+## Claude Code integration (`integrations/claude-code/`, optional)
+Installed by `integrations/claude-code/install.sh` (`--project DIR` or `--global`, `--uninstall` to remove). The scripts stay in the repository and are referenced from the settings file:
 - `route-codex.sh` (UserPromptSubmit): if ModelRouter chooses Codex, or if Claude has hit its limit, Codex answers in the terminal and the message never reaches Claude. Everything else follows Claude Code's normal path.
   - Exemptions: `c: ` (forces Claude), slash commands, attachments (`[Image #`, `[Pasted`)
   - `r: ` empties the conversation, then processes the rest of the message
   - File modifications are not exempted: if Codex is chosen, it writes to the directory. Claude does not see those changes unless they are described to it.
 - `limits-statusline.sh` (statusLine): shows the 5 h and weekly limits, and writes them to `~/.config/model-router/claude-limits.json`. The hook considers Claude exhausted as soon as a window reaches 95% before its reset.
-  - Only runs in sessions of this project. Limits are only provided for claude.ai subscriptions, after the first response.
+  - Runs only in sessions where the installer added it. Limits are only provided for claude.ai subscriptions, after the first response.
+  - The hook only routes to Codex: a choice of Jev is not handed over, so Jev questions from Claude Code still reach Claude.
 
 ## Dev
 - System Python 3.9, stdlib only at runtime; pytest in `.venv`
